@@ -3,10 +3,10 @@
 ## 内容简介
 
 ### Linux内核介绍
-+ [Unix历史](history-of-unix.md)
-+ Linus带来了Linux
-+ 操作系统和内核概览
-+ Linux VS 经典 Unix内核
++ [Unix历史](introduction-to-the-linux-kernel/history-of-unix.md)
++ [Linus带来了Linux](introduction-to-the-linux-kernel/introduction-to-linux.md)
++ [操作系统和内核概览](introduction-to-the-linux-kernel/overview-of-operating-system.md)
++ [Linux VS 经典 Unix内核](introduction-to-the-linux-kernel/linux-vs-unix.md)
 + Linux内核版本
 + Linux内核开发社区介绍
 + 我们开始旅程之前
