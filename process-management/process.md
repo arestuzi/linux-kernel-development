@@ -1,14 +1,23 @@
-# 进程管理
-本章主要介绍进程的概念，Unix操作系统中一个最基本的抽象概念。 本章对进程和线程进行了定义，然后讨论了Linux内核如何管理每个进程，进程在内核中是怎样进行枚举的，进程是如何创建的，以及它们是如何最终死去的。 运行应用软件是我们使用操作系统的原因，进程管理对于每个操作系统内核，包括Linux来讲都是至关重要的一部分。
+# Process Management
+This chapter introduces the concept of the `process`, one of the fundamental abstractions in Unix operating systems. It defines the process, as well as related concepts such as threads, and then discuss how the Linux kernel manages each process: how they are enumerated within the kernel, how they are created, and how they ultimately die. Because running user applications is the reason we have operating system, the process management is a crucial part of any operating system kernel, including Linux.
 
-# 进程
-进程是指一个正在执行中的程序（存储在一些介质中的代码）。 然而，进程也不光是正在执行中的代码（代码这个部分在Unix中称为`text section`）。他们还包含一些资源，比如打开的文件，待处理的信号， 内部内核数据，进程状态，一个或多个内存映射的内存地址空间，一个或多个执行中的线程以及包含全局变量的数据区域。实际上，进程是程序代码在执行中的动态的结果。内核需要有效的并且透明的管理所有这些细节。
+## The Process
+A `process` is a program(object code stored on some media) in the midst of execution. Processes are, however, more than just the executing program code (often called the `text section` in Unix). They also include a set of resources such as open files and pending signals, internal kernel data, processor state, a memory address space with one or more memory mappings, one or more `threads of execution`, and a `data section` containing global variables. Processes, in effect, are the living result of running program code. The kernel needs to manage all these details efficiently and transparently. 
 
-执行中的线程，我们通常简短的称之为线程，是进程中的很多活动目标的集合。 每个线程包含唯一的程序计数器， 进程栈和一系列的处理器寄存器。 内核并不是对线程进行调度，而是对每个线程来进行调度。在传统的Unix系统中，每个进程只包含一个线程。 现代系统中，包含多个线程的进程是非常常见的。 后续你会发现， Linux在用一个特别的方法实现了线程。 进程和线程在Linux中没有什么不同，对于Linux来讲， 线程只是一种特别的进程。
+Threads of execution, often shortened to `threads`, are the objects of activity within the process. Each thread includes a unique program counter, process stack, and set of processor registers. The kernel schedules individual threads, not processes. In traditional Unix systems, each process consists of one thread. In modern systems, however, multi-threaded programs --- those that consist of more than one thread --- are common. As you will see later, Linux has a unique implementation of threads: It does not differentiate between threads and processes. To Linux, a thread is just a special kind of process.
 
-现代操作系统中， 进程提供了两种虚拟化的方式：虚拟处理器和虚拟内存。 虚拟处理器给了进程一种假象，让它认为它拥有整个系统，尽管实际上，可能有几百个其他的进程和它在共用一个CPU。 第四章中的“进程调度”，我们会详细讨论这种虚拟化类型。 虚拟内存让进程以为它它拥有整个系统的内存，它可以随意分配和管理内存。 我们会在第十二章“内存管理”中详细描述虚拟内存。 有趣的是， 要知道线程会共享虚拟内存，但是每个线程会有其自己的虚拟处理器。
+On modern operating systems, processes provide two virtualizations: a virtualized processor and virtual memory. The virtual processor gives the process the illusion that it alone monopolizes the system, despite possibly sharing the processor among hundreds of other processes. Chapter 4, "Process Scheduling", discusses this virtualization. Virtual memory lets the process allocate and manage memory as if it alone owned all the memory in the system. Virtual memory is covered in Chapter 12, "Memory Management". Interestingly, note that threads share the virtual memory abstraction, whereas each receives its own virtualized processor.
 
-程序本身并不是一个进程，进程是一个处于`活动`中的程序，并且关联了一些资源。 所以， 来自于同一个程序的两个或更多的进程可以同时存在。 实际上，多个进程同时存在也会共享一些资源，比如打开的文件或一些地址空间。
+A program itself is not a process; a process is an **active** program and related resources. Indeed, two or more processes can exist that are executing the same program. In fact, two or more processes can exist that share various resources, such as open files or an address space.
 
-进程是被创建出来的。 Linux中，fork()系统调用通过复制一个已经存在的进程，从而创建了一个新的进程。 调用fok()的是这个进程的`父进程`，新创建的进程我们称之为`子进程`。当fork()返回后，父进程继续执行其他任务，子进程也开始执行一些任务。 实际上，fork()系统调用从内核返回了两次：一次来自于其父进程，另一次来自于它新创建的子进程。
+A process begins its life when, not surprisingly, it is created. In Linux, this occurs by means of the `fork()` system call, which creates a new process by duplicating an existing one. The process that calls `fork()` is the `parent`, whereas the new process is the `child`. The parent resumes execution and the child starts execution at the same place: where the call to `fork()` returns. The `fork()` system call returns from the kernel twice: once in the parent process and again in the newborn child.
 
+Often, immediately after a fork it is desirable to execute a new, different program. The `exec()` family of function calls creates a new address space and loads a new program into it. In contemporary Linux kernels, `fork()` is actually implemented via the `clone()` system call, which is discussed in a following section.
+
+Finally, a program exists via the exit() system call. This function terminates the process and frees all its resources. A parent process can inquire about the status of a terminated child via the `wait4()` system call, which enables a process to wait for the termination of a specific process. When a process exists, it is placed in to a special zombie state that represents terminated processes until the parent calls `wait()` or `waitpid()`.
+
+> Note
+> 
+> Another name for a process is a task. The Linux kernel internally refers to processes as tasks. In this book, I use the terms interchangeably, although when I say `task` I am generally referring to a process from the kernel's point of view.
+
+[`Previous Page`](../introduction-to-the-linux-kernel/linux-kernel-version.md) [`Next Page`](process-descriptor-and-task-structure.md) [`Table`](../README.md)
